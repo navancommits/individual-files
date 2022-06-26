@@ -52,29 +52,28 @@ if (!(Test-Path ".\.env") -or $InitializeEnvFile) {
     Set-EnvFileVariable "OKTA_CLIENT_SECRET" -Value (Read-ValueFromHost -Question "OKTA Client Secret" -Required)
 }
 
-$sitecoreModule=Get-Module -Name SitecoreDockerTools
-if (!$sitecoreModule)
-{
-	$psSitecoreRepo=Get-PSRepository -Name SitecoreGallery
-	if (!$psSitecoreRepo) { Register-PSRepository -Name SitecoreGallery -SourceLocation https://sitecore.myget.org/F/sc-powershell/api/v2 }
-	Install-Module SitecoreDockerTools -AllowClobber
-} 
-
+Install-SitecoreDockerTools
 
 if (!(Test-Path ".\docker\traefik\certs\cert.pem")) {
-    Write-Host "TLS certificate for Traefik not found, generating and adding hosts file entries" -ForegroundColor Green
-    $HostDomain = Get-EnvValueByKey "HOST_DOMAIN" 
-    if ($HostDomain -eq "") {
-        throw "Required variable 'HOST_DOMAIN' not found in .env file."
-    }
-    Initialize-HostNames $HostDomain
-
-    # Rendering site hostnames..
-    Add-HostsEntry "mvp.$($HostDomain)"
-    Add-HostsEntry "sugcon-eu.$($HostDomain)"
-    Add-HostsEntry "sugcon-anz.$($HostDomain)"
+    Write-Host "TLS certificate for Traefik not found, generating and adding hosts file entries" -ForegroundColor Green 
 
 }
+
+$HostDomain = Get-EnvValueByKey "HOST_DOMAIN" 
+if ($HostDomain -eq "") {
+    throw "Required variable 'HOST_DOMAIN' not found in .env file."
+}  
+
+Initialize-HostNames $HostDomain
+
+# Rendering site hostnames..
+$mvpSite=Check-HostNameExists "mvp.$($HostDomain)"
+$sugconeuSite=Check-HostNameExists "sugcon-eu.$($HostDomain)"
+$sugconanzSite=Check-HostNameExists "sugcon-anz.$($HostDomain)"
+if ($mvpSite -eq $false) {Add-HostsEntry "mvp.$($HostDomain)"}
+if ($sugconeuSite -eq $false) {Add-HostsEntry "sugcon-eu.$($HostDomain)"}
+if ($sugconanzSite -eq $false) {Add-HostsEntry "sugcon-anz.$($HostDomain)"}
+
 
 if ($Pull) {
     Write-Host "Pulling the latest Sitecore base images.." -ForegroundColor Magenta
