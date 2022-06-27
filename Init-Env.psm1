@@ -109,34 +109,29 @@ function Check-HostNameExists {
 					$_ -match "(?<IP>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+(?<HOSTNAME>\S+)" | Out-Null
 								
 					$ip=$matches.ip
-                              #write-host "after ip"
-                              $hostname=$matches.hostname   
-					
-					#get a comment if defined for the line
-					if ($_.contains("#")) {
-						$comment=$_.substring($_.indexof("#")+1)
+				      #write-host "after ip"
+				      $hostname=$matches.hostname   
+
+					if ($result -eq $false)
+					{
+						write-host $hostname
+						if ($hostname -eq $HostNameString) {
+							$result=$true
+							Write-Host "matched"
+							return 	$result	
+							#break													
+						}
 					}
-					else {
-						$comment=$null
-						if ($result -eq $false)
-						{
-							#write-host $hostname
-							if ($hostname -eq $HostNameString) {
-								$result=$true
-								Write-Host "matched"						
-								return 	$result						
-							}
-						}
-						else
-						{
-							return 	$result
-						}
-					}                 
+					else
+					{
+						return 	$result	
+						#break
+					}
 							  
 				} #end ForEach
 		} #end If $HostsData
 		else {
-				Write-Host ("{0} has no entries in its HOSTS file." -f $computername.toUpper()) -foreground Magenta
+				Write-Host ("Local Computer has no entries in its HOSTS file.") -foreground Magenta
 				$result=$false			
 		}
 		
