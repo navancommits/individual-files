@@ -49,10 +49,10 @@ try
 				
 				if ($result -eq $false)
 				{
-					write-host $hostname
+					#write-host $hostname
 					if ($hostname -eq $HostNameString) {
 						$result=$true
-						Write-Host "matched"
+						Write-Host "hostname exists"
 						return 	$result	
 						#break													
 					}
@@ -67,7 +67,7 @@ try
 			} #end ForEach
 	} #end If $HostsData
 	else {
-			Write-Host ("{0} has no entries in its HOSTS file." -f $computername.toUpper()) -foreground Magenta
+			Write-Host ("{0} has no entries in its HOSTS file." -f $env:computername.toUpper()) -foreground Magenta
 			$result=$false			
 	}
 	
