@@ -114,10 +114,10 @@ function Check-HostNameExists {
 
 					if ($result -eq $false)
 					{
-						write-host $hostname
+						#write-host $hostname
 						if ($hostname -eq $HostNameString) {
 							$result=$true
-							Write-Host "matched"
+							Write-Host "host name matched"
 							return 	$result	
 							#break													
 						}
