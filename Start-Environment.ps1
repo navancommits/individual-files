@@ -111,13 +111,13 @@ $dotnetexe="$dotnetFolder\dotnet.exe";
 $sdk="$dotnetFolder\sdk";
 
 if (!(Test-Path "$dotnetexe") -or !(Test-Path "$sdk")) {
-	Write-Host "Install dotnet Core 3.1 runtime and sdk from https://dotnet.microsoft.com/en-us/download" -ForegroundColor Yellow
+	Write-Host "Restart PowerShell after Installing dotnet Core 3.1 runtime and sdk from https://dotnet.microsoft.com/en-us/download" -ForegroundColor Yellow
 	exit 0
 }
 
 $result=Get-ChildItem  "$sdk" -filter "3.1.*" -Directory | % { $_.fullname }
 if (!$result) {
-	Write-Host "Install dotnet core SDK from https://dotnet.microsoft.com/en-us/download" -ForegroundColor Yellow
+	Write-Host "Restart PowerShell after Installing dotnet core SDK from https://dotnet.microsoft.com/en-us/download" -ForegroundColor Yellow
 	exit 0
 }
 
