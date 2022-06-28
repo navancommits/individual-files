@@ -124,10 +124,18 @@ if (!$result) {
 # Restore dotnet tool for sitecore login and serialization
 dotnet tool restore
 
+$dockerFolder= "$programFilesPath\docker\docker";
+#just for safety, checking for one of the exe in the folder
+$dockerApp="$programFilesPath\docker\docker\Docker Desktop.exe";
+
+if (!(Test-Path "$dockerFolder")-or !(Test-Path "$dockerApp")) {
+	Write-Host "Restart execution after installing Docker Desktop for Windows from https://docs.docker.com/desktop/windows/install/" -ForegroundColor Yellow
+	exit 0
+}
+
 Start-Docker -Build -ComposeFiles $composeFiles
 
 Push-Items -IdHost "https://id.$($HostDomain)" -CmHost "https://cm.$($HostDomain)"
-
 
 #TODO: this will be generalized when more sugcon sites are added.
 if ($startAll -or $StartMvpSite) {
