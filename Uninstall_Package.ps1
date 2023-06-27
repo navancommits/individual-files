@@ -13,7 +13,7 @@ Param (
 
     [ValidateNotNullOrEmpty()]
 
-    $SitePhysicalRoot = "C:\inetpub\wwwroot\sc103stsc.dev.local" ,	
+    $SitePhysicalRoot = "C:\inetpub\wwwroot\sc103lkgsc.dev.local" ,	
 	
 	# Zip file by default to be present in current execution folder    
 
@@ -105,6 +105,6 @@ Write-Host "Package uninstall process complete!"
 [int]$endMs = (Get-Date).Millisecond
 
 # Calculate elapsed time
-Write-Host "Execution time"$($startMs - $endMs)
+Write-Host "Execution time in milliseconds " $($endMs - $startMs)
 
 ##############################################
