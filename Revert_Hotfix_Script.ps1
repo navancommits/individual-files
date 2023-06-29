@@ -14,7 +14,7 @@ param(
 	
 	[ValidateNotNullOrEmpty()]
 	
-	[string]$InstallSourcePath,
+	[string]$InstallSourcePath = (Join-Path $PSScriptRoot "."),
 	
 
 	# The root folder with the WDP files.
@@ -41,6 +41,9 @@ param(
 
 )
 
+$watch = [System.Diagnostics.Stopwatch]::StartNew()
+
+$watch.Start() # Timer start
 
 $SitePhysicalRootSitecore = $SitePhysicalRoot  + $SitePrefix.Trim() + "sc" + $SiteSuffix
 
@@ -52,8 +55,8 @@ Write-Host "Site root" $SitePhysicalRootSitecore
 
 Write-Host "Id root" $SitePhysicalRootIdSrvr
 
-
 if (-not(Test-Path "Sitecore 10.3.0 rev. 008463 (Setup XP0 Developer Workstation rev. 1.5.0-r11).zip" -PathType Leaf)) {
+
 	$preference = $ProgressPreference
 	$ProgressPreference = "SilentlyContinue"
 
@@ -61,123 +64,137 @@ if (-not(Test-Path "Sitecore 10.3.0 rev. 008463 (Setup XP0 Developer Workstation
 	$sitecoreDownloadUrl = "https://sitecoredev.azureedge.net"
 	$packages = @{
 	"Sitecore 10.3.0 rev. 008463 (Setup XP0 Developer Workstation rev. 1.5.0-r11).zip" = "https://sitecoredev.azureedge.net/~/media/8F77892C62CB4DC698CB7688E5B6E0D7.ashx?date=20221130T160548"
-}
-
-
-# download packages from Sitecore
-$packages.GetEnumerator() | ForEach-Object {
-
-	$filePath = Join-Path $InstallSourcePath $_.Key
-	$fileUrl = $_.Value
-
-	if (Test-Path $filePath -PathType Leaf)
-	{
-		Write-Host ("Required package found: '{0}'" -f $filePath)
 	}
-	else
-	{
-		if ($PSCmdlet.ShouldProcess($fileName))
+
+
+	# download packages from Sitecore
+	$packages.GetEnumerator() | ForEach-Object {
+
+		$filePath = Join-Path $InstallSourcePath $_.Key
+		$fileUrl = $_.Value
+
+		if (Test-Path $filePath -PathType Leaf)
 		{
-			Write-Host ("Downloading '{0}' to '{1}'..." -f $fileUrl, $filePath)
-			Invoke-WebRequest -Uri $fileUrl -OutFile $filePath  -UseBasicParsing
+			Write-Host ("Required package found: '{0}'" -f $filePath)
 		}
 		else
 		{
-			# Download package
-			Invoke-WebRequest -Uri $fileUrl -OutFile $filePath -UseBasicParsing
+			if ($PSCmdlet.ShouldProcess($fileName))
+			{
+				Write-Host ("Downloading '{0}' to '{1}'..." -f $fileUrl, $filePath)
+				Invoke-WebRequest -Uri $fileUrl -OutFile $filePath  -UseBasicParsing
+			}
+			else
+			{
+				# Download package
+				Invoke-WebRequest -Uri $fileUrl -OutFile $filePath -UseBasicParsing
+			}
 		}
 	}
+	
+
+	Expand-Archive -Force -Path 'Sitecore * XP0 Developer Workstation rev. *.zip' -DestinationPath ".\xp0"
+
+
+	$ProgressPreference = $preference
+
+	Write-Host "Unzipped Sitecore Zip"
 }
-}
-
-Expand-Archive -Force -Path 'Sitecore * XP0 Developer Workstation rev. *.zip' -DestinationPath ".\xp0"
-
-
-$ProgressPreference = $preference
-
-Write-Host "Unzipped Sitecore Zip"
 
 
 ################################Unzip Sitecore wdp file - start
 
-$SitecoreWebSiteZipPath = $InstallSourcePath + "xp0\Sitecore * rev. * (OnPrem)_single.scwdp.zip"
+	$SitecoreWebSiteZipPath = $InstallSourcePath + "\xp0\Sitecore * rev. * (OnPrem)_single.scwdp.zip"
 
-Write-Host "Sitecore Wdp zip file whole path "$SitecoreWebSiteZipPath
-
-
-$SitecoreWebsiteZipPath = (Get-ChildItem $SitecoreWebSiteZipPath).FullName	
-
-Write-Host "Website zip Path" $SitecoreWebsiteZipPath
+	Write-Host "Sitecore Wdp zip file whole path "$SitecoreWebSiteZipPath
 
 
-$SitecoreWdpFileLocation=Split-Path $SitecoreWebSiteZipPath -Parent
+	#$SitecoreWebsiteZipPath = (Get-ChildItem $SitecoreWebSiteZipPath).FullName	
 
-Write-Host "Sitecore Wdp file unzip path " $SitecoreWdpFileLocation
-
-
-Write-Host "Sitecore Wdp file whole path" $SitecoreWdpFileLocation"\SitecoreWdp"
+	#Write-Host "Website zip Path" $SitecoreWebsiteZipPath
 
 
+	$SitecoreWdpFileLocation=Split-Path $SitecoreWebSiteZipPath -Parent
 
-Expand-Archive -Path $SitecoreWebSiteZipPath  -DestinationPath $SitecoreWdpFileLocation"\SitecoreWdp" -Force
+	Write-Host "Sitecore Wdp file unzip path " $SitecoreWdpFileLocation
+	
+	Write-Host "Sitecore Wdp file whole path" $SitecoreWdpFileLocation"\SitecoreWdp"
 
-$SourcePath=$SitecoreWdpFileLocation + "\SitecoreWdp\Content\Website" 
+	if (-not(Test-Path $SitecoreWdpFileLocation"\SitecoreWdp")) {
+	
 
-Write-host "Source path " $SourcePath
+		Expand-Archive -Path $SitecoreWebSiteZipPath  -DestinationPath $SitecoreWdpFileLocation"\SitecoreWdp" -Force
+	
+	}
+	
+	$SourcePath=$SitecoreWdpFileLocation + "\SitecoreWdp\Content\Website" 
+
+	Write-host "Source path " $SourcePath
+
 
 ################################Unzip Sitecore wdp file - end
 
 ################################Unzip Sitecore ID wdp file - start
 
-$SitecoreIDWebSiteZipPath = $InstallSourcePath + "xp0\Sitecore.IdentityServer * rev. * (OnPrem)_identityserver.scwdp.zip"
-
-Write-Host "Sitecore Wdp ID zip file whole path "$SitecoreIDWebSiteZipPath
+$SitecoreIDWebSiteZipPath = $InstallSourcePath + "\xp0\Sitecore.IdentityServer * rev. * (OnPrem)_identityserver.scwdp.zip"
 
 
-
-$SitecoreIDWebsiteZipPath = (Get-ChildItem $SitecoreIDWebSiteZipPath).FullName	
-
-Write-Host "ID Website zip Path" $SitecoreIDWebsiteZipPath
+	Write-Host "Sitecore Wdp ID zip file whole path "$SitecoreIDWebSiteZipPath
 
 
-$SitecoreIDWdpFileLocation=Split-Path $SitecoreIDWebSiteZipPath -Parent
+	#$SitecoreIDWebsiteZipPath = (Get-ChildItem $SitecoreIDWebSiteZipPath).FullName	
+
+	#Write-Host "ID Website zip Path" $SitecoreIDWebsiteZipPath
 
 
-Write-Host "Sitecore Wdp ID file whole path" $SitecoreIDWdpFileLocation"\SitecoreIdWdp"
+	$SitecoreIDWdpFileLocation=Split-Path $SitecoreIDWebSiteZipPath -Parent
 
 
-Expand-Archive -Path $SitecoreIDWebSiteZipPath  -DestinationPath $SitecoreIDWdpFileLocation"\SitecoreIdWdp" -Force
+	Write-Host "Sitecore Wdp ID file whole path" $SitecoreIDWdpFileLocation"\SitecoreIdWdp"
 
-$IdSourcePath=$SitecoreIDWdpFileLocation + "\SitecoreIdWdp\Content\Website" 
+	if (-not(Test-Path $SitecoreIDWdpFileLocation"\SitecoreIdWdp")) {
 
-Write-host "Id Source path " $IdSourcePath
+		Expand-Archive -Path $SitecoreIDWebSiteZipPath  -DestinationPath $SitecoreIDWdpFileLocation"\SitecoreIdWdp" -Force
+	
+	}
+
+	$IdSourcePath=$SitecoreIDWdpFileLocation + "\SitecoreIdWdp\Content\Website" 
+
+	Write-host "Id Source path " $IdSourcePath
+
+
 
 ################################Unzip Sitecore ID wdp file - end
 
 
 ################################Unzip Sitecore xconnect wdp file - start
 
-$SitecorexConnWebSiteZipPath = $InstallSourcePath + "xp0\Sitecore * rev. * (OnPrem)_xp0xconnect.scwdp.zip"
-
-Write-Host "Sitecore Wdp xConnect zip file whole path "$SitecorexConnWebSiteZipPath
+$SitecorexConnWebSiteZipPath = $InstallSourcePath + "\xp0\Sitecore * rev. * (OnPrem)_xp0xconnect.scwdp.zip"
 
 
-$SitecorexConnWebsiteZipPath = (Get-ChildItem $SitecorexConnWebSiteZipPath).FullName	
-
-Write-Host "xConnect Website zip Path" $SitecorexConnWebsiteZipPath
+	Write-Host "Sitecore Wdp xConnect zip file whole path "$SitecorexConnWebSiteZipPath
 
 
-$SitecorexConnWdpFileLocation=Split-Path $SitecorexConnWebSiteZipPath -Parent
+	#$SitecorexConnWebsiteZipPath = (Get-ChildItem $SitecorexConnWebSiteZipPath).FullName	
+
+	#Write-Host "xConnect Website zip Path" $SitecorexConnWebsiteZipPath
 
 
-Write-Host "Sitecore Wdp xConnect file whole path" $SitecorexConnWdpFileLocation"\SitecorexConnWdp"
+	$SitecorexConnWdpFileLocation=Split-Path $SitecorexConnWebSiteZipPath -Parent
 
 
-Expand-Archive -Path $SitecorexConnWebSiteZipPath  -DestinationPath $SitecorexConnWdpFileLocation"\SitecorexConnWdp" -Force
+	Write-Host "Sitecore Wdp xConnect file whole path" $SitecorexConnWdpFileLocation"\SitecorexConnWdp"
 
-$xConnSourcePath=$SitecorexConnWdpFileLocation + "\SitecorexConnWdp\Content\Website" 
+	if (-not(Test-Path $SitecorexConnWdpFileLocation"\SitecorexConnWdp")) {
 
-Write-host "xConn Source path " $xConnSourcePath
+		Expand-Archive -Path $SitecorexConnWebSiteZipPath  -DestinationPath $SitecorexConnWdpFileLocation"\SitecorexConnWdp" -Force
+	
+	}
+
+	$xConnSourcePath=$SitecorexConnWdpFileLocation + "\SitecorexConnWdp\Content\Website" 
+
+	Write-host "xConn Source path " $xConnSourcePath
+
 
 
 ################################Unzip Sitecore xconnect wdp file - end
@@ -188,8 +205,12 @@ $HotFixFileName=Get-ChildItem -Path $InstallSourcePath  -Filter *cumulative*.zip
 
 Write-Host "Unzipping the hotfix zip file - " $HotFixFileName
 
-Expand-Archive -Path $HotFixFileName  -Force -DestinationPath "Hotfix"
+if (-not(Test-Path ".\Hotfix")) {
+	
 
+	Expand-Archive -Path $HotFixFileName  -Force -DestinationPath "Hotfix"
+
+}
 
 
 
@@ -199,19 +220,19 @@ if ($PatchType -eq 'cumulative')
 
 	# The path to the Sitecore cumulative Package to Deploy.	
 
-	$SitecorePackageZipPath = $InstallSourcePath + ".\Hotfix\Sitecore * rev. * (OnPrem)_single.cumulative.delta.scwdp.zip"
+	$SitecorePackageZipPath = $InstallSourcePath + "\Hotfix\Sitecore * rev. * (OnPrem)_single.cumulative.delta.scwdp.zip"
 	
 	Write-Host $SitecorePackageZipPath
 	
 	# The path to the Identity Server cumulative Package to Deploy.
 
-	$IdentityServerPackageZipPath = $InstallSourcePath + ".\Hotfix\Sitecore.IdentityServer * rev. * (OnPrem)_identityserver.cumulative.delta.scwdp.zip"
+	$IdentityServerPackageZipPath = $InstallSourcePath + "\Hotfix\Sitecore.IdentityServer * rev. * (OnPrem)_identityserver.cumulative.delta.scwdp.zip"
 	
 	Write-Host $IdentityServerPackageZipPath
 
 	# The path to the xConnect Server cumulative Package to Deploy.
 
-	$XConnectPackageZipPath = $InstallSourcePath + ".\Hotfix\Sitecore * rev. * (OnPrem)_xp0xconnect.cumulative.delta.scwdp.zip"
+	$XConnectPackageZipPath = $InstallSourcePath + "\Hotfix\Sitecore * rev. * (OnPrem)_xp0xconnect.cumulative.delta.scwdp.zip"
 	
 	Write-Host $XConnectPackageZipPath	
 
@@ -269,18 +290,29 @@ $SitecorexConnectServerPackageUnzipPath = (Get-Item $XConnectPackageZipPath).Ful
 $SitecorexConnectServerPackageUnzipDir = (Get-Item $SitecorexConnectServerPackageUnzipPath ).DirectoryName+"\xconnect"
 
 
-Write-Host "Unzipping the Sitecore Package file to - "  $SitecorePackageUnzipDir 
+if (-not(Test-Path $SitecorePackageUnzipDir)) {	
 
-Expand-Archive -Path $SitecorePackagePath -Destination $SitecorePackageUnzipDir  -Force
+	Write-Host "Unzipping the Sitecore Package file to - "  $SitecorePackageUnzipDir 
+
+	Expand-Archive -Path $SitecorePackagePath -Destination $SitecorePackageUnzipDir  -Force
+
+}
+
+if (-not(Test-Path $SitecoreIdentityServerPackageUnzipDir)) {
+	
+	Write-Host "Unzipping the Identity Package file to - "  $SitecoreIdentityServerPackageUnzipDir 
+
+	Expand-Archive -Path $IdentityServerPackagePath -Destination $SitecoreIdentityServerPackageUnzipDir  -Force
+	
+}
 
 
-Write-Host "Unzipping the Identity Package file to - "  $SitecoreIdentityServerPackageUnzipDir 
+if (-not(Test-Path $SitecorexConnectServerPackageUnzipDir)) {
+	
+	Write-Host "Unzipping the xConnect Package file to - "  $SitecorexConnectServerPackageUnzipDir
 
-Expand-Archive -Path $IdentityServerPackagePath -Destination $SitecoreIdentityServerPackageUnzipDir  -Force
-
-Write-Host "Unzipping the xConnect Package file to - "  $SitecorexConnectServerPackageUnzipDir
-
-Expand-Archive -Path $XConnectPackagePath -Destination $SitecorexConnectServerPackageUnzipDir  -Force
+	Expand-Archive -Path $XConnectPackagePath -Destination $SitecorexConnectServerPackageUnzipDir  -Force
+}
 
 #####################################################Sitecore webroot wdp package unzip and processing - start
 
@@ -394,7 +426,7 @@ foreach ($file in $xConnfiles)
 		Write-Host "Removing "$xConnFileName
 		
 		remove-item $xConnFileName -force		
-	}
+	}	
 	
 	#Replace hotfix xConn path with wdp xConn path
 	$xConnWdpPath=$OrigxConnPath.Replace($SitecorexConnHotFixTraversePath,$xConnSourcePath)
@@ -418,3 +450,9 @@ foreach ($file in $xConnfiles)
 
 
 Write-Host "Process Complete!" 
+
+
+$watch.Stop() # Stopping the timer
+
+Write-Host "Execution time in seconds " $watch.Elapsed # Print script execution time
+
