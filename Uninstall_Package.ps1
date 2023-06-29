@@ -25,11 +25,11 @@ Param (
 
 )
 
-[int]$startMs = (Get-Date).Millisecond
+$watch = [System.Diagnostics.Stopwatch]::StartNew()
 
+$watch.Start() # Timer start
 
 $ErrorActionPreference = "Stop";
-
 
 $FileNameWithFullPath=(Get-Item ".\*.zip").FullName
 
@@ -101,10 +101,8 @@ Remove-item $SitePhysicalRoot"\App_Data\packages\"$PackageFileName -Force
 
 Write-Host "Package uninstall process complete!"
 
+$watch.Stop() # Stopping the timer
 
-[int]$endMs = (Get-Date).Millisecond
-
-# Calculate elapsed time
-Write-Host "Execution time in milliseconds " $($endMs - $startMs)
+Write-Host "Execution time in seconds " $watch.Elapsed # Print script execution time
 
 ##############################################
