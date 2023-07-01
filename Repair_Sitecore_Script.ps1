@@ -6,7 +6,7 @@ param(
 
     [ValidateNotNullOrEmpty()]
 
-	$SitePrefix = "sc103instance",  	
+	$SitePrefix = "sc93in",  	
 		
 
 	[Parameter(Mandatory = $false)]
@@ -188,7 +188,6 @@ $IdSourcePath=$SitecoreIDWdpFileLocation + "\SitecoreIdWdp\Content\Website"
 Write-host "Id Source path " $IdSourcePath
 
 
-
 ################################Unzip Sitecore ID wdp file - end
 
 
@@ -241,6 +240,7 @@ foreach ($file in $files)
 
 	$WebSiteCopyToLocation=$origPath.Replace($SourcePath,$SitePhysicalRootSitecore)
 	
+	
 	if (-not(Test-Path $WebSiteCopyToLocation)) {
 				
 		Write-Host -Foregroundcolor blue "Change detected!!! Copy from Path "$origPath
@@ -251,6 +251,28 @@ foreach ($file in $files)
 		
 		$WebSiteFixed=$true
 	
+	}
+	else
+	{	
+		
+		if ((Split-Path(Split-Path $WebSiteCopyToLocation -Parent) -Leaf) -eq "bin")
+		{			
+			#file present but check for length diff
+			$OrigSize=(Get-Item -Path $origPath).Length
+			
+			$CurrSize=(Get-Item $WebSiteCopyToLocation).Length			
+			
+			if ($OrigSize -ne $CurrSize)
+			{				
+				Write-Host -Foregroundcolor blue "Change detected!!! DLL Size Difference...  Copy from Path "$origPath
+			
+				Write-Host -Foregroundcolor blue "Copy to Path "$WebSiteCopyToLocation
+					
+				copy-item $origPath -Destination  (Split-Path $WebSiteCopyToLocation -Parent)  -force 
+				
+				$WebSiteFixed=$true
+			}
+		}
 	}
 	
 }
@@ -269,11 +291,11 @@ $idfiles = get-childitem -Path $IdSourcePath -recurse -Force
 
 Write-host "Scanning id srvr for repair Operation at " $SitePhysicalRootIdSrvr
 
-foreach ($file in $idfiles)
+foreach ($idfile in $idfiles)
 {
-	$OrigidPath=$file.FullName	
+	$OrigidPath=$idfile.FullName	
 	
-	$WebSiteIdCopyToLocation=$origPath.Replace($IdSourcePath,$SitePhysicalRootIdSrvr)
+	$WebSiteIdCopyToLocation=$OrigidPath.Replace($IdSourcePath,$SitePhysicalRootIdSrvr)
 			
 	if (-not(Test-Path $WebSiteIdCopyToLocation)) {
 		
@@ -285,6 +307,28 @@ foreach ($file in $idfiles)
 		
 		$WebSiteFixed=$true
 	
+	}
+	else
+	{	
+		
+		if ((Split-Path(Split-Path $WebSiteIdCopyToLocation -Parent) -Leaf) -eq "bin")
+		{			
+			#file present but check for length diff
+			$OrigSize=(Get-Item -Path $OrigidPath).Length
+			
+			$CurrSize=(Get-Item $WebSiteIdCopyToLocation).Length			
+			
+			if ($OrigSize -ne $CurrSize)
+			{				
+				Write-Host -Foregroundcolor blue "Change detected!!! DLL Size Difference...  Copy from Path "$OrigidPath
+			
+				Write-Host -Foregroundcolor blue "Copy to Path "$WebSiteIdCopyToLocation
+					
+				copy-item $OrigidPath -Destination  (Split-Path $WebSiteIdCopyToLocation -Parent)  -force 
+				
+				$WebSiteFixed=$true
+			}
+		}
 	}
 	
 }
@@ -305,7 +349,7 @@ foreach ($file in $xConnfiles)
 {
 	$OrigxConnPath=$file.FullName
 	
-	$WebSitexConnCopyToLocation=$origPath.Replace($xConnSourcePath,$SitePhysicalRootxConnSrvr)
+	$WebSitexConnCopyToLocation=$OrigxConnPath.Replace($xConnSourcePath,$SitePhysicalRootxConnSrvr)
 	
 	if (-not(Test-Path $WebSitexConnCopyToLocation)) {
 				
@@ -317,6 +361,28 @@ foreach ($file in $xConnfiles)
 		
 		$WebSiteFixed=$true
 	
+	}
+	else
+	{	
+		
+		if ((Split-Path(Split-Path $WebSitexConnCopyToLocation -Parent) -Leaf) -eq "bin")
+		{			
+			#file present but check for length diff
+			$OrigSize=(Get-Item -Path $OrigxConnPath).Length
+			
+			$CurrSize=(Get-Item $WebSitexConnCopyToLocation).Length			
+			
+			if ($OrigSize -ne $CurrSize)
+			{				
+				Write-Host -Foregroundcolor blue "Change detected!!! DLL Size Difference...  Copy from Path "$OrigxConnPath
+			
+				Write-Host -Foregroundcolor blue "Copy to Path "$WebSitexConnCopyToLocation
+					
+				copy-item $OrigxConnPath -Destination  (Split-Path $WebSitexConnCopyToLocation -Parent)  -force 
+				
+				$WebSiteFixed=$true
+			}
+		}
 	}
 	
 }
